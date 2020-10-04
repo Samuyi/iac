@@ -100,7 +100,7 @@ module "database" {
 
   backup_retention_period = 1
 
-  subnet_ids =  module.vpc.database_subnets[0]   
+  subnet_ids =  module.vpc.database_subnets
 
   major_engine_version = "11"
 }
