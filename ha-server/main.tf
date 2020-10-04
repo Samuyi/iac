@@ -56,7 +56,7 @@ module "ssh_security_group" {
   ingress_rules       = ["ssh-tcp"]
 }
 
-module "web-server" {
+module "web_server_1" {
   source          = "../modules/ec2"
   name            = var.name
   instance_type   = var.instance_type
@@ -64,4 +64,49 @@ module "web-server" {
   subnet_id       = module.vpc.public_subnets[1]
   security_groups = [module.http_security_group.this_security_group_id, module.icmp_security_group.this_security_group_id, module.ssh_security_group.this_security_group_id]
 
+}
+
+module "web_server_2" {
+  source          = "../modules/ec2"
+  name            = var.name
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.dev_access.key_name
+  subnet_id       = module.vpc.public_subnets[0]
+  security_groups = [module.http_security_group.this_security_group_id, module.icmp_security_group.this_security_group_id, module.ssh_security_group.this_security_group_id]
+
+}
+
+module "ha_elb" {
+  source  = "terraform-aws-modules/elb/aws"
+  version = "~> 2.0"
+
+  name = "osas-elb"
+
+  subnets         = [module.vpc.public_subnets[0], module.vpc.public_subnets[1]]
+  security_groups = [module.http_security_group.this_security_group_id]
+  internal        = false
+
+  listener = [
+    {
+      instance_port     = "80"
+      instance_protocol = "HTTP"
+      lb_port           = "80"
+      lb_protocol       = "HTTP"
+    }
+  ]
+
+  health_check = {
+    target              = "HTTP:80/"
+    interval            = 30
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+  }
+  // ELB attachments
+  number_of_instances = 2
+  instances           = [module.web_server_1.id[0], module.web_server_2.id[0]]  
+  
+  tags = {
+    Name       = "osas"
+  }
 }
