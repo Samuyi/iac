@@ -56,6 +56,28 @@ module "ssh_security_group" {
   ingress_rules       = ["ssh-tcp"]
 }
 
+module "ssh_security_group" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 3.0"
+
+  name                = "ssh-allow"
+  description         = "Security group for ssh access"
+  vpc_id              = module.vpc.vpc_id
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["ssh-tcp"]
+}
+module "database_security_group" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 3.0"
+
+  name                = "ssh-allow"
+  description         = "Security group for ssh access"
+  vpc_id              = module.vpc.vpc_id
+  ingress_cidr_blocks = [module.web-server.public_ip[0]]
+  ingress_rules       = ["postgresql-tcp"]
+}
+
+
 module "web-server" {
   source          = "../modules/ec2"
   name            = var.name
@@ -64,4 +86,31 @@ module "web-server" {
   subnet_id       = module.vpc.public_subnets[1]
   security_groups = [module.http_security_group.this_security_group_id, module.icmp_security_group.this_security_group_id, module.ssh_security_group.this_security_group_id]
 
+}
+
+module "database" {
+  source = "terraform-aws-modules/rds/aws"
+  identifier = "osasdb-postgres"
+
+  engine            = "postgres"
+  engine_version    = "11.3"
+  instance_class    = "t3.xlarge"
+  allocated_storage = 5
+  storage_encrypted = false
+
+  name     = "osas-db"
+  username = "osas"
+  password = "hYSLov0U3+FA5l+L4I0jJb6pRuXqhIQ3F+TSk1"
+  port     = "5432"
+
+  vpc_security_group_ids = [module.database_security_group.this_security_group_id]
+
+  maintenance_window = "Mon:00:00-Mon:03:00"
+  backup_window      = "03:00-06:00"
+
+  backup_retention_period = 1
+
+  subnet_ids =  module.vpc.database_subnets[0]   
+
+  major_engine_version = "11"
 }
