@@ -104,3 +104,25 @@ module "database" {
 
   major_engine_version = "11"
 }
+
+module "replica" {
+  source = "terraform-aws-modules/rds/aws"
+
+  identifier = "osasdb-replica-postgres"
+
+  replicate_source_db = module.database.this_db_instance_id
+
+  name     = "osas-db"
+  port     = "5432"
+
+  username = ""
+  password = ""
+  
+
+  vpc_security_group_ids = [module.database_security_group.this_security_group_id]
+  maintenance_window = "Tue:00:00-Tue:03:00"
+  backup_window      = "03:00-06:00"
+
+  backup_retention_period = 0
+
+}
