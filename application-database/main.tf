@@ -85,7 +85,7 @@ module "database" {
   engine            = "postgres"
   engine_version    = "11.3"
   instance_class    = "t3.xlarge"
-  allocated_storage = 5
+  allocated_storage = 500
   storage_encrypted = false
 
   name     = "osas-db"
@@ -111,9 +111,13 @@ module "replica" {
   identifier = "osasdb-replica-postgres"
 
   replicate_source_db = module.database.this_db_instance_id
-
+  
+  engine            = "postgres"
+  engine_version    = "11.3"
   name     = "osas-db"
   port     = "5432"
+  instance_class    = "t3.xlarge"
+  allocated_storage = 500
 
   username = ""
   password = ""
