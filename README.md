@@ -4,15 +4,8 @@ terrafom init
 terraform plan
 terraform apply
 
-# For devs
-Password should be stored in AWS secrets or Hashicorp Vault
+The public IP of the server, the dns name of the database master and replica will be output after the command runs successfully
 
-# Security
-Database exists in private subnet and allows connections from the application server only
-Create a user for the application with fine tuned roles 
-SQL injection attack is prevention with appropriate database libraries
-Password are never stored in the clear in the database
+# Routing
 
-# Reason For Choice 
-Postgres repesents a stable, reliable database with a rich set of features
-
+Routing to the replica would be done with the library used to connect to the database. If there is more than one replica a network loadbalancer can be used to balance requests between the replicas. 
